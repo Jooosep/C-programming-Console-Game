@@ -28,6 +28,7 @@ int travelPoint2;
 int thunderLaunchPoints[3];
 int thunderLaunched;
 int thunderProgress;
+int thunderGuard;
 int thunderSpeed;
 int thunderFrequency;
 int thunderVolume;
@@ -62,14 +63,15 @@ int rodDuration;
 int rodPosition;
 int treeDecay;
 int treeHealth[5];
-clock_t start, delay, thunderPause, thunderDelay, shieldDelay, shieldPause, treeDownTime, treeTimer[5], treeDelay, soundDelay, sprintDelay, rodDowntime, statsDelay, treeDamageDelay[5];
+clock_t start, delay, thunderPause, thunderDelay, shieldDelay, shieldPause;
+clock_t treeDownTime, treeTimer[5], treeDelay, soundDelay, sprintDelay;
+clock_t rodDowntime, statsDelay, treeDamageDelay[5];
 
 
 const char *choice1[4];
 const char *choice2[4];
 const char *choice3[4];
 const char *choice4[4];
-int thunderGuard = 0;
 
 const char *EndText[7];
 
@@ -502,10 +504,11 @@ initialize()
 	soundDelay = clock();
 	thunderLaunched = 0;
 	thunderProgress = MIN_Y;
-	currentPosition = 51;
-	thunderSpeed = 3;
+	currentPosition = 100;
+	thunderSpeed = 30;
 	thunderFrequency = 2600;
-	thunderVolume = 4;
+	thunderVolume = 1;
+	thunderGuard = 0;
 
 
 	choice1[0] = "Shield cooldown -2 seconds";
@@ -543,7 +546,7 @@ initialize()
 	runDelay = 20;
 	start = 0;
 	delay = clock();
-	points = 250;
+	points = 0;
 
 	statsDelay = 100;
 	key = 0;
@@ -751,11 +754,11 @@ main()
 		hidecursor();
 		if (clock() - statsDelay > 100)
 		{
-			gotoxy(98, MAX_Y + 1);
+			gotoxy(138, MAX_Y + 1);
 			printf("\b \b \b \b");
-			gotoxy(93, MAX_Y + 2);
+			gotoxy(98, MAX_Y + 2);
 			printf("\b \b \b \b");
-			gotoxy(141, MAX_Y + 1);
+			gotoxy(58, MAX_Y + 1);
 			printf("\b \b \b \b");
 			gotoxy(136, MAX_Y + 2);
 			printf("\b \b \b \b");
@@ -764,11 +767,16 @@ main()
 
 			if (lightningRodUnlocked)
 			{
-				gotoxy(80, MAX_Y + 1);
+				gotoxy(80, MAX_Y + 2);
 				printf(clock() - rodDowntime > rodCooldown ? "LIGHTNING-ROD CD: 0" : "LIGHTNING-ROD CD: %d", ((rodCooldown / 1000) - ((clock() - rodDowntime) / 1000)));
 			}
 
-			gotoxy(80, MAX_Y + 2);
+			gotoxy(40, MAX_Y + 2);
+			printf("SCORE: %d", points);
+			gotoxy(40, MAX_Y + 1);
+			printf("ThunderGuards: %d", thunderGuard);
+
+			gotoxy(125, MAX_Y + 1);
 			printf(clock() - sprintDownTime > sprintCooldown ? "SPRINT CD: 0" : "SPRINT CD: %d", ((sprintCooldown / 1000) - ((clock() - sprintDownTime) / 1000)));
 
 			gotoxy(125, MAX_Y + 2);
@@ -777,8 +785,7 @@ main()
 			gotoxy(125, MAX_Y + 3);
 			cd = clock() - shieldPause;
 			printf(cd > shieldCooldown ? "SHIELD CD: 0" : "SHIELD CD: %d", ((shieldCooldown / 1000) - (cd / 1000)));
-			gotoxy(125, MAX_Y + 1);
-			printf("ThunderGuards: %d", thunderGuard);
+
 
 			statsDelay = clock();
 
@@ -1078,6 +1085,7 @@ main()
 						else if (points > 249)
 						{
 							system("CLS");
+							PlaySound("c:\\BGM.wav", NULL, SND_ASYNC);
 							Sleep(400);
 							gotoxy(50, 20);
 							printf("%s",EndText[0]);
