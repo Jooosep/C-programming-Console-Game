@@ -85,7 +85,7 @@ void hidecursor()
 	SetConsoleCursorInfo(consoleHandle, &info);
 }
 
-void gotoxy(int x, int y)
+void ggotoxy(int x, int y)
 {
 	COORD coord;
 	coord.X = x;
@@ -486,12 +486,206 @@ clearHero(int currentPosition)
 		printf("\b \b");
 	}
 }
+
 int askNumber()
 {
 	int i1;
 	scanf_s("%d", &i1);
 	while (getchar() != '\n') {};
 	return i1;
+}
+
+int gameProgress()
+{
+	if (thunderSpeed > 16)
+	{
+		thunderSpeed--;
+		thunderFrequency = thunderFrequency - 110;
+	}
+	else if (thunderVolume == 1)
+	{
+		gotoxy(80, 30);
+		printf("Choose wisely, things will only get worse from here");
+		gotoxy(80, 31);
+		printf("1)%s", choice1[0]);
+		gotoxy(80, 32);
+		printf("2)%s", choice1[1]);
+		gotoxy(80, 33);
+		printf("3)%s", choice1[2]);
+		thunderVolume = 2;
+
+		for (int i = 0; i < 1; i++)
+		{
+			int c = askNumber();
+
+			if (c == 1)
+			{
+				shieldCooldown = shieldCooldown - 2000;
+			}
+			else if (c == 2)
+			{
+				treeCooldown = treeCooldown - 10000;
+			}
+			else if (c == 3)
+			{
+				sprintDuration = sprintDuration + 4000;
+			}
+			else
+				i--;
+		}
+	}
+	else if (points > 50 && thunderVolume == 2)
+	{
+		gotoxy(80, 30);
+		printf("Choose wisely, things will only get worse from here");
+		gotoxy(80, 31);
+		printf("1)%s", choice2[0]);
+		gotoxy(80, 32);
+		printf("2)%s", choice2[1]);
+		gotoxy(80, 33);
+		printf("3)%s", choice2[2]);
+		gotoxy(80, 34);
+		thunderVolume = 3;
+		thunderSpeed = 13;
+
+		for (int i = 0; i < 1; i++)
+		{
+			int c = askNumber();
+
+			if (c == 1)
+			{
+				shieldCooldown = shieldCooldown - 2000;
+			}
+			else if (c == 2)
+			{
+				sprintSpeed -= 5;
+			}
+			else if (c == 3)
+			{
+				sprintDuration = sprintDuration + 3000;
+			}
+			else
+				i--;
+		}
+
+	}
+	else if (points > 100 && thunderVolume == 3)
+	{
+		gotoxy(80, 30);
+		printf("Choose wisely, things will only get worse from here");
+		gotoxy(80, 31);
+		printf("1)%s", choice3[0]);
+		gotoxy(80, 32);
+		printf("2)%s", choice3[1]);
+		gotoxy(80, 33);
+		printf("3)%s", choice3[2]);
+		gotoxy(80, 34);
+		printf("4)%s", choice3[3]);
+		thunderVolume = 4;
+		thunderSpeed = 10;
+
+		for (int i = 0; i < 1; i++)
+		{
+			int c = askNumber();
+
+			if (c == 1)
+			{
+				treeMaxHealth = treeMaxHealth * 3;
+			}
+			else if (c == 2)
+			{
+				shieldDuration = shieldDuration * 3;
+			}
+			else if (c == 3)
+			{
+				treeCooldown = treeCooldown - 6000;
+			}
+			else if (c == 4)
+			{
+				lightningRodUnlocked = 1;
+			}
+			else
+				i--;
+		}
+	}
+	else if (points > 150 && thunderVolume == 4 && thunderSpeed > 7)
+	{
+		thunderSpeed = 7;
+
+		gotoxy(80, 30);
+		printf("Choose wisely, things will only get worse from here");
+		gotoxy(80, 31);
+		printf("1)%s", choice4[0]);
+		gotoxy(80, 32);
+		printf("2)%s", choice4[1]);
+		gotoxy(80, 33);
+		printf("3)%s", choice4[2]);
+
+		for (int i = 0; i < 1; i++)
+		{
+			int c = askNumber();
+
+			if (c == 1)
+			{
+				sprintSpeed -= 5;
+			}
+			else if (c == 2)
+			{
+				treeMaxHealth = treeMaxHealth * 3;
+			}
+			else if (c == 3)
+			{
+				rodCooldown = rodCooldown - 15000;
+			}
+			else
+				i--;
+		}
+
+	}
+	else if (thunderSpeed > 5 && points > 200)
+	{
+		thunderSpeed = 5;
+		thunderFrequency = thunderFrequency - 300;
+	}
+	else if (thunderSpeed > 3 && points > 200)
+	{
+		thunderSpeed = 3;
+		thunderFrequency = thunderFrequency - 300;
+	}
+	else if (points > 249)
+	{
+		system("CLS");
+		PlaySound("c:\\BGM.wav", NULL, SND_ASYNC);
+		Sleep(400);
+		gotoxy(50, 20);
+		printf("%s", EndText[0]);
+		Sleep(400);
+		gotoxy(50, 21);
+		printf("%s", EndText[1]);
+		Sleep(400);
+		gotoxy(50, 22);
+		printf("%s", EndText[2]);
+		Sleep(400);
+		gotoxy(50, 23);
+		printf("%s", EndText[3]);
+		Sleep(400);
+		gotoxy(50, 24);
+		printf("%s", EndText[4]);
+		Sleep(400);
+		gotoxy(50, 25);
+		printf("%s", EndText[5]);
+		Sleep(400);
+		gotoxy(50, 26);
+		printf("%s", EndText[6]);
+		Sleep(4000);
+
+		gotoxy(40, 35);
+		printf("LIVE ETERNALLY!", points);
+		gotoxy(40, 36);
+		printf("PRESS ENTER TO GO AGAIN!");
+		while ((c = getchar()) != '\n' && c != EOF);
+		initialize();
+	}
 }
 
 initialize()
@@ -588,7 +782,6 @@ main()
 
 	srand(time(NULL));   // should only be called once
 	initialize();
-
 
 	while (1)
 	{
@@ -852,7 +1045,6 @@ main()
 									PlaySound("c:\\explosion.wav", NULL, SND_ASYNC);
 									treePhase[t] = 14;
 									moveHero(currentPosition, move, direction);
-									points++;
 								}
 								else
 								{
@@ -877,6 +1069,7 @@ main()
 							thunderGuard += 1;
 							points++;
 							i = 10;
+							gameProgress();
 						}
 						else if (thunderGuard > 0)
 						{
@@ -916,209 +1109,19 @@ main()
 							while ((c = getchar()) != '\n' && c != EOF);
 							initialize();
 						}
-
-					}
-					else if (thunderProgress >= MAX_Y)
-					{
-						system("CLS");
-						moveHero(currentPosition, move, direction);
-						gameBorders();
-						thunderLaunched = 0;
-						thunderProgress = MIN_Y;
-						thunderPause = clock();
-						points++;
-						if (thunderSpeed > 16)
-						{
-							thunderSpeed--;
-							thunderFrequency = thunderFrequency - 110;
-						}
-						else if (thunderVolume == 1)
-						{
-							gotoxy(80, 30);
-							printf("Choose wisely, things will only get worse from here");
-							gotoxy(80, 31);
-							printf("1)%s",choice1[0]);
-							gotoxy(80, 32);
-							printf("2)%s", choice1[1]);
-							gotoxy(80, 33);
-							printf("3)%s", choice1[2]);
-							thunderVolume = 2;
-
-							for(int i = 0; i < 1; i++)
-							{
-								int c = askNumber();
-
-								if (c == 1)
-								{
-									shieldCooldown = shieldCooldown - 2000;
-								}
-								else if (c == 2)
-								{
-									treeCooldown = treeCooldown - 10000;
-								}
-								else if (c == 3)
-								{
-									sprintDuration = sprintDuration + 4000;
-								}
-								else
-									i--;
-							}
-						}
-						else if (points > 50 && thunderVolume == 2)
-						{
-							gotoxy(80, 30);
-							printf("Choose wisely, things will only get worse from here");
-							gotoxy(80, 31);
-							printf("1)%s", choice2[0]);
-							gotoxy(80, 32);
-							printf("2)%s", choice2[1]);
-							gotoxy(80, 33);
-							printf("3)%s", choice2[2]);
-							gotoxy(80, 34);
-							thunderVolume = 3;
-							thunderSpeed = 13;
-
-							for (int i = 0; i < 1; i++)
-							{
-								int c = askNumber();
-
-								if (c == 1)
-								{
-									shieldCooldown = shieldCooldown - 2000;
-								}
-								else if (c == 2)
-								{
-									sprintSpeed -= 5;
-								}
-								else if (c == 3)
-								{
-									sprintDuration = sprintDuration + 3000;
-								}
-								else
-									i--;
-							}
-
-						}
-						else if (points > 100 && thunderVolume == 3)
-						{
-							gotoxy(80, 30);
-							printf("Choose wisely, things will only get worse from here");
-							gotoxy(80, 31);
-							printf("1)%s", choice3[0]);
-							gotoxy(80, 32);
-							printf("2)%s", choice3[1]);
-							gotoxy(80, 33);
-							printf("3)%s", choice3[2]);
-							gotoxy(80, 34);
-							printf("4)%s", choice3[3]);
-							thunderVolume = 4;
-							thunderSpeed = 10;
-
-							for (int i = 0; i < 1; i++)
-							{
-								int c = askNumber();
-
-								if (c == 1)
-								{
-									treeMaxHealth = treeMaxHealth * 3;
-								}
-								else if (c == 2)
-								{
-									shieldDuration = shieldDuration * 3;
-								}
-								else if (c == 3)
-								{
-									treeCooldown = treeCooldown - 6000;
-								}
-								else if (c == 4)
-								{
-									lightningRodUnlocked = 1;
-								}
-								else
-									i--;
-							}
-						}
-						else if (points > 150 && thunderVolume == 4 && thunderSpeed > 7)
-						{
-							thunderSpeed = 7;
-
-							gotoxy(80, 30);
-							printf("Choose wisely, things will only get worse from here");
-							gotoxy(80, 31);
-							printf("1)%s", choice4[0]);
-							gotoxy(80, 32);
-							printf("2)%s", choice4[1]);
-							gotoxy(80, 33);
-							printf("3)%s", choice4[2]);
-
-							for (int i = 0; i < 1; i++)
-							{
-								int c = askNumber();
-
-								if (c == 1)
-								{
-									sprintSpeed -= 5;
-								}
-								else if (c == 2)
-								{
-									treeMaxHealth = treeMaxHealth * 3;
-								}
-								else if (c == 3)
-								{
-									rodCooldown = rodCooldown - 15000;
-								}
-								else
-									i--;
-							}
-
-						}
-						else if (thunderSpeed > 5 && points > 200)
-						{
-							thunderSpeed = 5;
-							thunderFrequency = thunderFrequency - 300;
-						}
-						else if (thunderSpeed > 3 && points > 200)
-						{
-							thunderSpeed = 3;
-							thunderFrequency = thunderFrequency - 300;
-						}
-						else if (points > 249)
-						{
-							system("CLS");
-							PlaySound("c:\\BGM.wav", NULL, SND_ASYNC);
-							Sleep(400);
-							gotoxy(50, 20);
-							printf("%s",EndText[0]);
-							Sleep(400);
-							gotoxy(50, 21);
-							printf("%s", EndText[1]);
-							Sleep(400);
-							gotoxy(50, 22);
-							printf("%s", EndText[2]);
-							Sleep(400);
-							gotoxy(50, 23);
-							printf("%s", EndText[3]);
-							Sleep(400);
-							gotoxy(50, 24);
-							printf("%s", EndText[4]);
-							Sleep(400);
-							gotoxy(50, 25);
-							printf("%s", EndText[5]);
-							Sleep(400);
-							gotoxy(50, 26);
-							printf("%s", EndText[6]);
-							Sleep(4000);
-
-							gotoxy(40, 35);
-							printf("LIVE ETERNALLY!", points);
-							gotoxy(40, 36);
-							printf("PRESS ENTER TO GO AGAIN!");
-							while ((c = getchar()) != '\n' && c != EOF);
-							initialize();
-						}
 					}
 				}
-				
+				if (thunderProgress >= MAX_Y)
+				{
+					system("CLS");
+					moveHero(currentPosition, move, direction);
+					gameBorders();
+					thunderLaunched = 0;
+					thunderProgress = MIN_Y;
+					thunderPause = clock();
+					points++;
+					gameProgress();
+				}
 			}
 		}
 		
