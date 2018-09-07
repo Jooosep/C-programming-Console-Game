@@ -85,7 +85,7 @@ void hidecursor()
 	SetConsoleCursorInfo(consoleHandle, &info);
 }
 
-void ggotoxy(int x, int y)
+void gotoxy(int x, int y)
 {
 	COORD coord;
 	coord.X = x;
@@ -416,22 +416,22 @@ void thunder(int progress)
 			}
 			else 
 			{
-				if (r[i] < 34)
+				if (r[i] < 34 && travelPoints[i] > 1)
 				{
 					travelPoints[i] -= 1;
 					gotoxy(travelPoints[i], progress);
 					printf("/\n");
 				}
-				else if (r[i] < 67)
-				{
-					gotoxy(travelPoints[i], progress);
-					printf("|\n");
-				}
-				else
+				else if (r[i] < 67 && travelPoints[i] < 237)
 				{
 					travelPoints[i] += 1;
 					gotoxy(travelPoints[i], progress);
 					printf("\\\n");
+				}
+				else
+				{
+					gotoxy(travelPoints[i], progress);
+					printf("|\n");
 				}
 			}
 		}
@@ -489,10 +489,16 @@ clearHero(int currentPosition)
 
 int askNumber()
 {
-	int i1;
-	scanf_s("%d", &i1);
-	while (getchar() != '\n') {};
-	return i1;
+	int result;
+	int i;
+	do
+	{
+		char number[10];
+		fgets(number, 10, stdin);
+		result = sscanf_s(number, "%d", &i);
+	} while (result < 1);
+
+	return i;
 }
 
 int gameProgress()
@@ -655,7 +661,7 @@ int gameProgress()
 	else if (points > 249)
 	{
 		system("CLS");
-		PlaySound("c:\\BGM.wav", NULL, SND_ASYNC);
+		PlaySound("BGM.wav", NULL, SND_ASYNC);
 		Sleep(400);
 		gotoxy(50, 20);
 		printf("%s", EndText[0]);
@@ -690,7 +696,7 @@ int gameProgress()
 
 initialize()
 {
-	PlaySound("c:\\thunderClap.wav", NULL, SND_ASYNC);
+	PlaySound("thunderClap.wav", NULL, SND_ASYNC);
 	system("CLS");
 	thunderPause = clock();
 	thunderDelay = clock();
@@ -856,53 +862,31 @@ main()
 				break;
 
 		}
-		
-		switch (keyArray[0])
+		for (int i = 0; i < 2; i++)
 		{
-		case 115:
-			if (clock() - sprintDownTime > sprintCooldown)
+			switch (keyArray[i])
 			{
-				sprint = 1;
-				sprintTimer = clock();
-				runDelay = sprintSpeed;
-				sprintDownTime = clock();
-			}
-			break;
+			case 115:
+				if (clock() - sprintDownTime > sprintCooldown)
+				{
+					sprint = 1;
+					sprintTimer = clock();
+					runDelay = sprintSpeed;
+					sprintDownTime = clock();
+				}
+				break;
 
-		case 114:
-			if (lightningRodUnlocked && clock() - rodDowntime > rodCooldown)
-			{
-				lightningRod = 1;
-				rodDowntime = clock();
-				rodPosition = currentPosition;
-				buildRod();
+			case 114:
+				if (lightningRodUnlocked && clock() - rodDowntime > rodCooldown)
+				{
+					lightningRod = 1;
+					rodDowntime = clock();
+					rodPosition = currentPosition;
+					buildRod();
+				}
+				break;
 			}
-			break;
 		}
-
-		switch (keyArray[1])
-		{
-		case 115:
-			if (clock() - sprintDownTime > sprintCooldown)
-			{
-				sprint = 1;
-				sprintTimer = clock();
-				runDelay = sprintSpeed;
-				sprintDownTime = clock();
-			}
-			break;
-
-		case 114:
-			if (lightningRodUnlocked && clock() - rodDowntime > rodCooldown)
-			{
-				lightningRod = 1;
-				rodDowntime = clock();
-				rodPosition = currentPosition;
-				buildRod();
-			}
-			break;
-		}
-		
 
 		if (sprint && clock() - sprintTimer > sprintDuration)
 		{
@@ -1042,13 +1026,13 @@ main()
 							{
 								if (treeHealth[t] == 1)
 								{
-									PlaySound("c:\\explosion.wav", NULL, SND_ASYNC);
+									PlaySound("explosion.wav", NULL, SND_ASYNC);
 									treePhase[t] = 14;
 									moveHero(currentPosition, move, direction);
 								}
 								else
 								{
-									PlaySound("c:\\strike3.wav", NULL, SND_ASYNC);
+									PlaySound("strike3.wav", NULL, SND_ASYNC);
 									treeHealth[t] -= 1;
 									treeDamageDelay[t] = clock();
 								}
@@ -1059,7 +1043,7 @@ main()
 					{
 						if (shield)
 						{
-							PlaySound("c:\\absorb.wav", NULL, SND_ASYNC);
+							PlaySound("absorb.wav", NULL, SND_ASYNC);
 							system("CLS");
 							moveHero(currentPosition, move, direction);
 							gameBorders();
@@ -1073,7 +1057,7 @@ main()
 						}
 						else if (thunderGuard > 0)
 						{
-							PlaySound("c:\\strike3.wav", NULL, SND_ASYNC);
+							PlaySound("strike3.wav", NULL, SND_ASYNC);
 							thunderGuard--;
 							thunderLaunched = 0;
 							thunderProgress = MIN_Y;
@@ -1089,11 +1073,11 @@ main()
 							death = 1;
 							moveHero(currentPosition, move, direction);
 							if (points < 10)
-								PlaySound("c:\\strike3.wav", NULL, SND_ASYNC);
+								PlaySound("strike3.wav", NULL, SND_ASYNC);
 							else if (points < 20)
-								PlaySound("c:\\strike2.wav", NULL, SND_ASYNC);
+								PlaySound("strike2.wav", NULL, SND_ASYNC);
 							else if (points > 19)
-								PlaySound("c:\\strike1.wav", NULL, SND_ASYNC);
+								PlaySound("strike1.wav", NULL, SND_ASYNC);
 							for (int i = 0; i < 20; i++)
 							{
 								moveHero(currentPosition, move, direction);

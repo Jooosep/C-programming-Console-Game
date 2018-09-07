@@ -8,15 +8,19 @@
 
 int askNumbers()
 {
-	int i1, i2;
-	scanf_s("%d", &i1);
+	int result;
+	int i;
+	do
+	{
+		char number[10];
+		fgets(number, 10, stdin);
+		result = sscanf_s(number, "%d", &i);
+	} while (result < 1);
 
-	while (getchar() != '\n') {};
-
-	return i1;
+	return i;
 }
 
-void gotoxy(int x, int y)
+void ggotoxy(int x, int y)
 {
 	COORD coord;
 	coord.X = x;
@@ -34,13 +38,6 @@ int mains()
 {
 	while (1)
 	{
-
-		while (_kbhit())
-		{
-			key = _getch();
-
-		}
-
 		if (round == 0)
 		{
 			printf("Hello lets go!\n");
@@ -136,7 +133,7 @@ int mains()
 			}
 			round++;
 		}
-		else if (round == 4)
+		else
 		{
 			gotoxy(20, 19);
 			printf("A:%d, B:%d, C: %d", A, B, C);
