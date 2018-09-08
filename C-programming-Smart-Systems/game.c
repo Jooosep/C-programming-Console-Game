@@ -692,7 +692,7 @@ int gameProgress()
 			else if (c == 3)
 			{
 				if (lightningRodUnlocked)
-					rodCooldown = rodCooldown - 8000;
+					rodCooldown -= 8000;
 				else
 					lightningRodUnlocked = 1;
 			}
@@ -755,6 +755,7 @@ int gameProgress()
 	}
 	else if (thunderSpeed > 3 && points > 250)
 	{
+		thunderVolume = 5;
 		thunderSpeed = 3;
 		thunderPause = clock() + 2000;
 	}
@@ -793,7 +794,7 @@ initialize()
 	currentPosition = 100;
 	thunderSpeed = 30;
 	thunderFrequency = 2600;
-	thunderVolume = 1;
+	thunderVolume = 6;
 	thunderGuard = 0;
 
 
