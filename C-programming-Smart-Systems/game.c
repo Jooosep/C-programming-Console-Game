@@ -458,7 +458,7 @@ void thunder(int progress)
 		{
 			if (progress == MIN_Y)
 			{
-				if (i = 0)
+				if (i == 0)
 					travelPoints[i] = thunderLaunchPoints[i];
 				else
 				{
@@ -562,21 +562,25 @@ int gameProgress()
 			if (c == 1)
 			{
 				shieldCooldown = shieldCooldown - 2000;
-				printf("You chose to upgrade shieldCooldown.\n");
+
 			}
 			else if (c == 2)
 			{
 				treeCooldown = treeCooldown - 10000;
-				printf("You chose to upgrade treeCooldown.\n");
+
 			}
 			else if (c == 3)
 			{
 				sprintDuration = sprintDuration + 4000;
-				printf("You chose to upgrade sprintDuratown.\n");
+
 			}
 			else
 				i--;
 		}
+		system("CLS");
+		moveHero(currentPosition, move, direction);
+		gameBorders();
+		thunderPause = clock() + 2000;
 	}
 	else if (points > 50 && thunderVolume == 2)
 	{
@@ -599,22 +603,23 @@ int gameProgress()
 			if (c == 1)
 			{
 				shieldCooldown = shieldCooldown - 2000;
-				printf("You chose to upgrade shieldCooldown.\n");
+
 			}
 			else if (c == 2)
 			{
 				sprintSpeed -= 5;
-				printf("you chose to upgrade sprintSpeed.\n");
 			}
 			else if (c == 3)
 			{
 				sprintDuration = sprintDuration + 3000;
-				printf("you chose to upgrade sprintDuration.\n");
 			}
 			else
 				i--;
 		}
-
+		system("CLS");
+		moveHero(currentPosition, move, direction);
+		gameBorders();
+		thunderPause = clock() + 2000;
 	}
 	else if (points > 100 && thunderVolume == 3)
 	{
@@ -654,6 +659,10 @@ int gameProgress()
 			else
 				i--;
 		}
+		system("CLS");
+		moveHero(currentPosition, move, direction);
+		gameBorders();
+		thunderPause = clock() + 2000;
 	}
 	else if (points > 150 && thunderVolume == 4 && thunderSpeed > 7)
 	{
@@ -690,20 +699,23 @@ int gameProgress()
 			else
 				i--;
 		}
-
+		system("CLS");
+		moveHero(currentPosition, move, direction);
+		gameBorders();
+		thunderPause = clock() + 2000;
 	}
 	else if (thunderSpeed > 5 && points > 200)
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
 		gotoxy(80, 31);
-		printf("1)%s", choice3[0]);
+		printf("1)%s", choice5[0]);
 		gotoxy(80, 32);
-		printf("2)%s", choice3[1]);
+		printf("2)%s", choice5[1]);
 		gotoxy(80, 33);
-		printf("3)%s", choice3[2]);
+		printf("3)%s", choice5[2]);
 		gotoxy(80, 34);
-		printf("4)%s", choice3[3]);
+		printf("4)%s", choice5[3]);
 		thunderVolume = 4;
 		thunderSpeed = 10;
 
@@ -736,11 +748,15 @@ int gameProgress()
 		}
 		thunderSpeed = 5;
 		thunderFrequency = thunderFrequency - 300;
+		system("CLS");
+		moveHero(currentPosition, move, direction);
+		gameBorders();
+		thunderPause = clock() + 2000;
 	}
 	else if (thunderSpeed > 3 && points > 250)
 	{
 		thunderSpeed = 3;
-		thunderVolume = 5;
+		thunderPause = clock() + 2000;
 	}
 	else if (points > 299)
 	{
@@ -775,7 +791,7 @@ initialize()
 	thunderLaunched = 0;
 	thunderProgress = MIN_Y;
 	currentPosition = 100;
-	thunderSpeed = 16;
+	thunderSpeed = 30;
 	thunderFrequency = 2600;
 	thunderVolume = 1;
 	thunderGuard = 0;
@@ -894,6 +910,7 @@ intro()
 	}
 	gotoxy(50, 45);
 	printf("PRESS ENTER TO START THE GAME!");
+	hidecursor();
 	while ((c = getchar()) != '\n' && c != EOF);
 }
 
