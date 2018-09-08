@@ -238,6 +238,69 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 		break;
 	}
 }
+void speedLine(int position)
+{
+	if (direction == 1)
+	{
+		if (sprintSpeed == 15)
+		{
+			gotoxy(position - 1, MAX_Y - 4);
+			printf("%c", 196);
+			gotoxy(position - 2, MAX_Y - 3);
+			printf("%c", 196);
+			gotoxy(position - 2, MAX_Y - 2);
+			printf("%c", 196);
+		}
+		else if (sprintSpeed == 10)
+		{
+			gotoxy(position - 2, MAX_Y - 4);
+			printf("%c%c", 196, 196);
+			gotoxy(position - 3, MAX_Y - 3);
+			printf("%c%c", 196, 196);
+			gotoxy(position - 4, MAX_Y - 2);
+			printf("%c%c%c", 196, 196, 196);
+		}
+		else if (sprintSpeed == 5)
+		{
+			gotoxy(position - 2, MAX_Y - 4);
+			printf("%c%c", 196, 196);
+			gotoxy(position - 4, MAX_Y - 3);
+			printf("%c%c%c", 196, 196, 196);
+			gotoxy(position - 5, MAX_Y - 2);
+			printf("%c%c%c%c", 196, 196, 196, 196);
+		}
+	}
+	else
+	{
+		if (sprintSpeed == 15)
+		{
+			gotoxy(position, MAX_Y - 4);
+			printf("%c", 196);
+			gotoxy(position + 1, MAX_Y - 3);
+			printf("%c", 196);
+			gotoxy(position + 1, MAX_Y - 2);
+			printf("%c", 196);
+		}
+		else if (sprintSpeed == 10)
+		{
+			gotoxy(position, MAX_Y - 4);
+			printf("%c%c", 196, 196);
+			gotoxy(position + 1, MAX_Y - 3);
+			printf("%c%c", 196, 196);
+			gotoxy(position + 1, MAX_Y - 2);
+			printf("%c%c%c", 196, 196, 196);
+		}
+		else if (sprintSpeed == 5)
+		{
+			gotoxy(position, MAX_Y - 4);
+			printf("%c%c", 196, 196);
+			gotoxy(position + 1, MAX_Y - 3);
+			printf("%c%c%c", 196, 196, 196);
+			gotoxy(position + 1, MAX_Y - 2);
+			printf("%c%c%c%c", 196, 196, 196, 196);
+		}
+	}
+}
 
 void moveHero(int position, int move, int direction)
 {
@@ -288,6 +351,11 @@ void moveHero(int position, int move, int direction)
 		}
 		else if (direction == 1)
 		{
+			if (sprint)
+			{
+				speedLine(position);
+			}
+
 			gotoxy(position, MAX_Y - 4);
 			printf(" O");
 			gotoxy(position - 1, MAX_Y - 3);
@@ -306,6 +374,10 @@ void moveHero(int position, int move, int direction)
 		}
 		else if (direction < 3)
 		{
+			if (sprint)
+			{
+				speedLine(position);
+			}
 			gotoxy(position - 2, MAX_Y - 4);
 			printf("O");
 			gotoxy(position - 1, MAX_Y - 3);
@@ -497,23 +569,23 @@ void thunder(int progress)
 
 clearHero(int currentPosition)
 {
-	gotoxy(currentPosition + 3, MAX_Y - 2);
-	for (int i = 0; i < 6; i++)
+	gotoxy(currentPosition + 6, MAX_Y - 2);
+	for (int i = 0; i < 12; i++)
 	{
 		printf("\b \b");
 	}
-	gotoxy(currentPosition + 3, MAX_Y - 3);
-	for (int i = 0; i < 5; i++)
+	gotoxy(currentPosition + 5, MAX_Y - 3);
+	for (int i = 0; i < 10; i++)
 	{
 		printf("\b \b");
 	}
 	gotoxy(currentPosition + 3, MAX_Y - 4);
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		printf("\b \b");
 	}
 	gotoxy(currentPosition + 3, MAX_Y - 5);
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		printf("\b \b");
 	}
@@ -794,7 +866,7 @@ initialize()
 	currentPosition = 100;
 	thunderSpeed = 30;
 	thunderFrequency = 2600;
-	thunderVolume = 6;
+	thunderVolume = 1;
 	thunderGuard = 0;
 
 
@@ -853,7 +925,7 @@ initialize()
 
 	sprint = 0;
 	sprintDelay = clock();
-	sprintSpeed = 15;
+	sprintSpeed = 5;
 	runDelay = 20;
 	start = 0;
 	delay = clock();
@@ -1006,6 +1078,7 @@ main()
 			case 115:
 				if (clock() - sprintDownTime > sprintCooldown)
 				{
+					PlaySound("sprintSound.wav", NULL, SND_ASYNC);
 					sprint = 1;
 					sprintTimer = clock();
 					runDelay = sprintSpeed;
