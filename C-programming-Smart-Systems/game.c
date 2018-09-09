@@ -19,14 +19,14 @@
 char Junk[16]; // buffer for discarding excessive user input, 
 			   // used by "FLUSH_STDIN" macro
 
-int r[3];
+int r[6];
 int c;
 int keyArray[2];
 int agg;
 int cd;
-int travelPoints[3];
+int travelPoints[6];
 int travelPoint2;
-int thunderLaunchPoints[3];
+int thunderLaunchPoints[6];
 int thunderLaunched;
 int thunderProgress;
 int thunderGuard;
@@ -64,15 +64,19 @@ int rodDuration;
 int rodPosition;
 int treeDecay;
 int treeHealth[5];
+int treeFruit[5];
 
 int aegisPerk;
+int shieldThrow;
 int lightningRunnerPerk;
 int channelerPerk;
 int gardenerPerk;
+int harvesterPerk;
+int timeSlowPerk;
 
 clock_t start, delay, thunderPause, thunderDelay, shieldDelay, shieldPause;
 clock_t treeDownTime, treeTimer[5], treeDelay, soundDelay, sprintDelay;
-clock_t rodDowntime, statsDelay, treeDamageDelay[5];
+clock_t rodDowntime, statsDelay, treeDamageDelay[5], throwDelay;
 
 
 const char *choice1[4];
@@ -128,6 +132,109 @@ void clearRod()
 
 }
 
+int aegisThrow()
+{
+	int thunderGuardGained = 0;
+
+	if (direction == 0)
+	{
+		gotoxy(currentPosition, MAX_Y - 4);
+		printf("O");
+		gotoxy(currentPosition - 1, MAX_Y - 3);
+		printf("%c|", 205);
+		gotoxy(currentPosition - 1, MAX_Y - 2);
+		printf("< \\");
+
+		for (int i = currentPosition - 2; i > 0; i--)
+		{
+			gotoxy(i, MAX_Y - 3);
+			printf("(");
+			for (int p = 0; p < currentPosition - 2 - i; p++)
+			{
+				printf("%c", 196);
+			}
+			Sleep(3);
+		}
+
+		if (thunderProgress > 50)
+		{
+
+			for (int i = 0; i < thunderVolume; i++)
+			{
+				if (travelPoints[i] < currentPosition)
+				{
+					thunderGuardGained++;
+					for (int t = thunderProgress; t < MAX_Y; t++)
+					{
+						gotoxy(travelPoints[i], t);
+						printf("|");
+						Sleep(3);
+					}
+				}
+			}
+		}
+
+		for (int i = 1; i < currentPosition - 2; i++)
+		{
+			gotoxy(i + 1, MAX_Y - 3);
+			printf("\b  \b");
+			gotoxy(i + 1, MAX_Y - 3);
+			printf("(");
+			Sleep(3);
+		}
+
+	}
+	else
+	{
+		gotoxy(currentPosition, MAX_Y - 4);
+		printf("O");
+		gotoxy(currentPosition, MAX_Y - 3);
+		printf("|%c", 205);
+		gotoxy(currentPosition - 1, MAX_Y - 2);
+		printf("/ >");
+
+		for (int i = currentPosition + 2; i < MAX_X; i++)
+		{
+			gotoxy(currentPosition + 2, MAX_Y - 3);
+			for (int p = currentPosition + 2; p < i; p++)
+			{
+				printf("%c", 196);
+			}
+			gotoxy(i, MAX_Y - 3);
+			printf(")");
+			Sleep(3);
+		}
+
+		if (thunderProgress > 50)
+		{
+
+			for (int i = 0; i < thunderVolume; i++)
+			{
+				if (travelPoints[i] > currentPosition)
+				{
+					thunderGuardGained++;
+					for (int t = thunderProgress; t < MAX_Y; t++)
+					{
+						gotoxy(travelPoints[i], t);
+						printf("|");
+						Sleep(3);
+					}
+				}
+			}
+		}
+
+		for (int i = MAX_X - 1; i > currentPosition + 2; i--)
+		{
+			gotoxy(i - 2, MAX_Y - 3);
+			printf(")");
+			gotoxy(i, MAX_Y - 3);
+			printf("\b  \b");
+			Sleep(3);
+		}
+
+	}
+	return thunderGuardGained;
+}
 void buildTree(int buildPhase, int treePos, int treeNumber)
 {
 	switch (buildPhase)
@@ -166,7 +273,15 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c", 186);
 		gotoxy(treePos, MAX_Y - 3);
-		printf("%c", 186);
+		if ( harvesterPerk && clock() - treeTimer[treeNumber] > 16500)
+		{
+			printf("%c%c", 186, 235);
+			treeFruit[treeNumber] = 1;
+		}
+		else 
+		{
+			printf("%c", 186);
+		}
 		gotoxy(treePos - 2, MAX_Y - 4);
 		printf("%c%c%c%c%c%c", 177,177,177, 177, 177, 177);
 		gotoxy(treePos - 1, MAX_Y - 5);
@@ -223,6 +338,7 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 		{
 			printf("\b \b");
 		}
+		treeFruit[treeNumber] = 0;
 		break;
 	case 15:
 
@@ -484,7 +600,7 @@ void thunder(int progress)
 					printf("|\n");
 				}
 			}
-			else if (abs(currentPosition - travelPoints[i]) < 60 && !(lightningRunnerPerk && progress < 55)) 
+			else if (abs(currentPosition - travelPoints[i]) < 60 && !(lightningRunnerPerk && !shield)) 
 			{
 
 				if (currentPosition > travelPoints[i])
@@ -633,7 +749,7 @@ int gameProgress()
 
 			if (c == 1)
 			{
-				shieldCooldown = shieldCooldown - 2000;
+				shieldCooldown = shieldCooldown - 1000;
 
 			}
 			else if (c == 2)
@@ -658,13 +774,12 @@ int gameProgress()
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
-		gotoxy(80, 31);
-		printf("1)%s", choice2[0]);
-		gotoxy(80, 32);
-		printf("2)%s", choice2[1]);
-		gotoxy(80, 33);
-		printf("3)%s", choice2[2]);
-		gotoxy(80, 34);
+		for (int i = 0; i < 4; i++)
+		{
+			gotoxy(80, 31 + i);
+			printf("%d)%s",i + 1, choice2[i]);
+		}
+
 		thunderVolume = 3;
 		thunderSpeed = 13;
 
@@ -683,7 +798,11 @@ int gameProgress()
 			}
 			else if (c == 3)
 			{
-				sprintDuration = sprintDuration + 3000;
+				sprintDuration = sprintDuration + 4000;
+			}
+			else if (c == 4)
+			{
+				harvesterPerk = 1;
 			}
 			else
 				i--;
@@ -697,14 +816,11 @@ int gameProgress()
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
-		gotoxy(80, 31);
-		printf("1)%s", choice3[0]);
-		gotoxy(80, 32);
-		printf("2)%s", choice3[1]);
-		gotoxy(80, 33);
-		printf("3)%s", choice3[2]);
-		gotoxy(80, 34);
-		printf("4)%s", choice3[3]);
+		for (int i = 0; i < 4; i++)
+		{
+			gotoxy(80, 31 + i);
+			printf("%d)%s",i + 1, choice3[i]);
+		}
 		thunderVolume = 4;
 		thunderSpeed = 10;
 
@@ -718,7 +834,7 @@ int gameProgress()
 			}
 			else if (c == 2)
 			{
-				shieldDuration = shieldDuration * 3;
+				timeSlowPerk = 1;
 			}
 			else if (c == 3)
 			{
@@ -741,13 +857,11 @@ int gameProgress()
 		thunderSpeed = 7;
 
 		gotoxy(80, 30);
-		printf("Choose wisely, things will only get worse from here");
-		gotoxy(80, 31);
-		printf("1)%s", choice4[0]);
-		gotoxy(80, 32);
-		printf("2)%s", choice4[1]);
-		gotoxy(80, 33);
-		printf("3)%s", choice4[2]);
+		for (int i = 0; i < 4; i++)
+		{
+			gotoxy(80, 31 + i);
+			printf("%d)%s", i + 1, choice4[i]);
+		}
 
 		for (int i = 0; i < 1; i++)
 		{
@@ -767,6 +881,11 @@ int gameProgress()
 					rodCooldown -= 8000;
 				else
 					lightningRodUnlocked = 1;
+			}
+			else if (c == 4)
+			{
+				sprintDuration += 5000;
+				timeSlowPerk += 1
 			}
 			else
 				i--;
@@ -827,6 +946,7 @@ int gameProgress()
 	}
 	else if (thunderSpeed > 3 && points > 250)
 	{
+		thunderFrequency = thunderFrequency - 300;
 		thunderVolume = 5;
 		thunderSpeed = 3;
 		thunderPause = clock() + 2000;
@@ -861,6 +981,7 @@ initialize()
 	thunderDelay = clock();
 	shieldDelay = clock();
 	soundDelay = clock();
+	throwDelay = clock();
 	thunderLaunched = 0;
 	thunderProgress = MIN_Y;
 	currentPosition = 100;
@@ -870,35 +991,37 @@ initialize()
 	thunderGuard = 0;
 
 
-	choice1[0] = "Shield cooldown -2 seconds";
+	choice1[0] = "Shield cooldown -1 seconds";
 	choice1[1] = "Seed cooldown -10 seconds";
 	choice1[2] = "Sprint duration +4 seconds";
 	choice1[3] = "";
 
 	choice2[0] = "Shield cooldown -2 second";
 	choice2[1] = "Upgrade sprint speed";
-	choice2[2] = "Sprint duration +3 seconds";
-	choice2[3] = "";
+	choice2[2] = "Sprint duration +5 seconds";
+	choice2[3] = "Trees that have stood for 10 seconds grow a fruit that gives you +1 thunderGuard";
 
 	choice3[0] = "Trees become more resistant to lightning";
-	choice3[1] = "Triple shield uptime";
+	choice3[1] = "Time slows down when you sprint";
 	choice3[2] = "Seed cooldown -6 seconds";
 	choice3[3] = "Unlock the mighty lightning rod";
 
 	choice4[0] = "Upgrade sprint speed";
-	choice4[1] = "Trees become even more resistant to lightning";
+	choice4[1] = "Trees become more resistant to lightning";
 	choice4[2] = "Lightning rod cooldown - 8 seconds OR unlock it if you haven't yet.";
-	choice4[3] = "";
+	choice4[3] = "Sprint duration + 5 seconds and enchance timeslow while sprinting";
 
-	choice5[0] = "Double shield uptime and now +2 thunderGuard from shielding - CARRIER OF AEGIS";
-	choice5[1] = "Permanently sprint and lightning homes into you later - LIGHTNING RUNNER";
-	choice5[2] = "Lightning rod cooldown - 7 seconds and +1 thunderGuard for planting the rod - THE CHANNELER";
-	choice5[3] = "Trees bloom instantly into their final form - THE GARDENER";
+	choice5[0] = "Throw your shield horizontally by pressing the left or right arrow key, snatch a thunderGuard from each ray of lightning it passes - MASTER OF AEGIS";
+	choice5[1] = "Permanently sprint and lightning can't home into you except when you shield, guarding now grants + 3 thunderGuard- LIGHTNING RUNNER";
+	choice5[2] = "Lightning rod cooldown - 7 seconds and refresh all other cooldowns when you plant the rod - CHANNELER";
+	choice5[3] = "Trees bloom instantly into their final form and slow down approaching lightning - GARDENER";
 
 	aegisPerk = 0;
 	lightningRunnerPerk = 0;
 	channelerPerk = 0;
 	gardenerPerk = 0;
+	harvesterPerk = 0;
+	timeSlowPerk = 0;
 
 	endText[0] = "||        |||||||||    ||||||||   |||||||||  |||     ||  ||||          |       |||||||||| ||      ||";
 	endText[1] = "||        ||          ||          ||         ||||    ||  ||  ||       | |      ||      ||  ||    || ";
@@ -925,7 +1048,7 @@ initialize()
 
 	sprint = 0;
 	sprintDelay = clock();
-	sprintSpeed = 5;
+	sprintSpeed = 15;
 	runDelay = 20;
 	start = 0;
 	delay = clock();
@@ -940,6 +1063,7 @@ initialize()
 	rodDuration = 15000;
 	shieldDuration = 300;
 	shieldCooldown = 8000;
+	shieldThrow = 0;
 	treeCooldown = 20000;
 	treeMaxHealth = 2;
 	treeDurationUpgrade = 0;
@@ -954,6 +1078,7 @@ initialize()
 		treePhase[i] = -2;
 		treeHealth[i] = 2;
 		treeDamageDelay[i] = clock();
+		treeFruit[i] = 0;
 	}
 
 	rodPosition = -1;
@@ -1022,6 +1147,11 @@ main()
 				key = 0;
 				direction = 1;
 				start = clock();
+				if (aegisPerk && shield && clock() - throwDelay > 3000)
+				{
+					shieldThrow = 1;
+					throwDelay = clock();
+				}
 				break;
 
 			case 75:
@@ -1029,6 +1159,11 @@ main()
 				direction = 0;
 				key = 0;
 				start = clock();
+				if (aegisPerk && shield && clock() - throwDelay > 3000)
+				{
+					shieldThrow = 1;
+					throwDelay = clock();
+				}
 				break;
 
 			case 72:
@@ -1078,7 +1213,10 @@ main()
 			case 115:
 				if (clock() - sprintDownTime > sprintCooldown)
 				{
-					PlaySound("sprintSound.wav", NULL, SND_ASYNC);
+					if (sprintSpeed == 5)
+					{
+						PlaySound("sprintSound.wav", NULL, SND_ASYNC);
+					}
 					sprint = 1;
 					sprintTimer = clock();
 					runDelay = sprintSpeed;
@@ -1104,7 +1242,12 @@ main()
 		{
 			sprint = 0;
 			if (!lightningRunnerPerk)
+			{
 				runDelay = 20;
+			}
+			else {
+				sprint = 1;
+			}
 		}
 
 		if (lightningRod && clock() - rodDowntime > rodDuration)
@@ -1118,6 +1261,18 @@ main()
 			buildRod();
 		}
 
+		for (int i = 0; i < 5; i++)
+		{
+			if (treeFruit[i] == 1)
+			{
+				if (abs(treePosition[i] - currentPosition) < 3)
+				{
+					thunderGuard++;
+					treeFruit[i] = 0;
+					treeTimer[i] = clock() - 6500;
+				}
+			}
+		}
 		if (move && clock() - start > 250)
 		{
 			move = 0;
@@ -1220,9 +1375,37 @@ main()
 			}
 		}
 		
+		if (shieldThrow)
+		{
+			clearHero(currentPosition);
+			thunderGuard += aegisThrow();
+			shieldThrow = 0;
+			shield = 0;
+			clearHero(currentPosition);
+			moveHero(currentPosition, move, direction);
+			shieldPause = clock();
+		}
 		if (thunderLaunched)
 		{
-			if (thunderProgress < MAX_Y && clock() - thunderDelay > thunderSpeed)
+			if (timeSlowPerk > 0 && sprint)
+			{
+				if (thunderProgress < MAX_Y && clock() - thunderDelay > thunderSpeed + timeSlowPerk * 5)
+				{
+					thunderDelay = clock();
+					thunder(thunderProgress);
+					thunderProgress++;
+				}
+			}
+			else if (gardenerPerk && tree > 0 && thunderProgress > 47 && thunderProgress < MAX_Y)
+			{
+				if (thunderProgress < MAX_Y && clock() - thunderDelay > thunderSpeed + 20)
+				{
+					thunderDelay = clock();
+					thunder(thunderProgress);
+					thunderProgress++;
+				}
+			}
+			else if (thunderProgress < MAX_Y && clock() - thunderDelay > thunderSpeed)
 			{
 				thunderDelay = clock();
 				thunder(thunderProgress);
@@ -1266,8 +1449,8 @@ main()
 							thunderProgress = MIN_Y;
 							thunderPause = clock();
 							thunderGuard++;
-							if (aegisPerk)
-								thunderGuard++;
+							if (lightningRunnerPerk)
+								thunderGuard += 2;
 							points++;
 							i = 10;
 							gameProgress();
