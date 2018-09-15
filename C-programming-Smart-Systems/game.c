@@ -19,14 +19,15 @@
 char Junk[16]; // buffer for discarding excessive user input, 
 			   // used by "FLUSH_STDIN" macro
 
-int r[6];
+int random[6];
+
 int c;
 int keyArray[2];
 int agg;
 int cd;
-int travelPoints[6];
-int travelPoint2;
-int thunderLaunchPoints[6];
+int travelPoints[7];
+int thunderLaunchPoints[7];
+int thunderPath[7][59];
 int thunderLaunched;
 int thunderProgress;
 int thunderGuard;
@@ -42,29 +43,35 @@ int step;
 int shield;
 int shieldDuration;
 int shieldCooldown;
+
 int tree;
 int treeMaxHealth;
 int treePosition[5];
 int treeDuration;
 int treePhase[5];
 int treeCooldown;
-int treeDurationUpgrade;
+int treeHealth[5];
+int treeFruit[5];
+
 int points;
+
+int sprint;
 int sprintDownTime;
 int sprintDuration;
 int sprintCooldown;
-int sprint;
 int sprintSpeed;
 int sprintTimer;
+
 int runDelay;
+
 int lightningRodUnlocked;
 int rodCooldown;
 int lightningRod;
 int rodDuration;
 int rodPosition;
+
 int treeDecay;
-int treeHealth[5];
-int treeFruit[5];
+
 
 int aegisPerk;
 int shieldThrow;
@@ -73,6 +80,11 @@ int channelerPerk;
 int gardenerPerk;
 int harvesterPerk;
 int timeSlowPerk;
+
+int botMode; //0 = player, 1 = bot
+//botMode = 1;
+int gameMode; //1 = normal, 0 = survival
+
 
 clock_t start, delay, thunderPause, thunderDelay, shieldDelay, shieldPause;
 clock_t treeDownTime, treeTimer[5], treeDelay, soundDelay, sprintDelay;
@@ -105,6 +117,30 @@ void gotoxy(int x, int y)
 	coord.X = x;
 	coord.Y = y;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+void recordPath(int i, int direction)
+{
+	gotoxy(travelPoints[i], thunderProgress);
+	thunderPath[i][thunderProgress - 3] = travelPoints[i];
+	if (direction == 0)
+		printf("\\\n");
+	else if (direction == 1)
+		printf("/\n");
+	else
+		printf("|\n");
+}
+
+void clearThunder()
+{
+	for (int i = 0; i < thunderVolume; i++)
+	{
+		for (int t = 0; t < 59; t++)
+		{
+			gotoxy(thunderPath[i][t] + 1, t + 3);
+			printf("\b \b");
+		}
+	}
 }
 
 void buildRod()
@@ -177,10 +213,10 @@ int aegisThrow()
 		for (int i = 1; i < currentPosition - 2; i++)
 		{
 			gotoxy(i + 1, MAX_Y - 3);
-			printf("\b  \b");
+			printf("\b \b");
 			gotoxy(i + 1, MAX_Y - 3);
 			printf("(");
-			Sleep(3);
+			Sleep(2);
 		}
 
 	}
@@ -228,12 +264,23 @@ int aegisThrow()
 			gotoxy(i - 2, MAX_Y - 3);
 			printf(")");
 			gotoxy(i, MAX_Y - 3);
-			printf("\b  \b");
+			printf("\b \b");
 			Sleep(3);
 		}
 
 	}
 	return thunderGuardGained;
+}
+void clearTree(int pos)
+{
+	for (int t = 1; t < 6; t++)
+	{
+		gotoxy(pos + 5, MAX_Y - t);
+		for (int i = 0; i < 7; i++)
+		{
+			printf("\b \b");
+		}
+	}
 }
 void buildTree(int buildPhase, int treePos, int treeNumber)
 {
@@ -241,17 +288,17 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 	{
 	case 0:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		break;
 	case 1:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c",186);
 		break;
 	case 2:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c", 186);
 		gotoxy(treePos, MAX_Y - 3);
@@ -259,17 +306,17 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 		break;
 	case 3:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c", 186);
 		gotoxy(treePos, MAX_Y - 3);
 		printf("%c", 186);
-		gotoxy(treePos - 2, MAX_Y - 4);
-		printf("%c%c%c%c%c%c", 177,177,177, 177, 177, 177);
+		gotoxy(treePos - 1, MAX_Y - 4);
+		printf("%c%c%c", 177, 177, 177);
 		break;
 	case 4:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c", 186);
 		gotoxy(treePos, MAX_Y - 3);
@@ -290,7 +337,7 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 
 	case 11:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c", 186);
 		gotoxy(treePos, MAX_Y - 3);
@@ -306,7 +353,7 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 		break;
 	case 12:
 		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
+		printf("\\\\///");
 		gotoxy(treePos, MAX_Y - 2);
 		printf("%c", 186);
 		gotoxy(treePos, MAX_Y - 3);
@@ -331,24 +378,10 @@ void buildTree(int buildPhase, int treePos, int treeNumber)
 		}
 		break;
 	case 14:
-		gotoxy(treePos - 2, MAX_Y - 1);
-		printf("\\\\//");
-		gotoxy(treePos - 1, MAX_Y - 2);
-		for (int i = 0; i < 5; i++)
-		{
-			printf("\b \b");
-		}
 		treeFruit[treeNumber] = 0;
 		break;
 	case 15:
-
-		gotoxy(treePos - 1, MAX_Y - 1);
-		for (int i = 0; i < 5; i++)
-		{
-			printf("\b \b");
-		}
 		tree--;
-
 		treePosition[treeNumber] = -1;
 		treePhase[treeNumber] = -2;
 		break;
@@ -439,6 +472,11 @@ void moveHero(int position, int move, int direction)
 		printf("/|\\");
 		gotoxy(position - 1, MAX_Y - 2);
 		printf("/ \\");
+		if (clock() - shieldPause > shieldCooldown)
+		{
+			gotoxy(position, MAX_Y - 1);
+			printf("%c", 232);
+		}
 	}
 	else 
 	{
@@ -487,6 +525,11 @@ void moveHero(int position, int move, int direction)
 				printf("%c\ ", 217);
 				step++;
 			}
+			if (clock() - shieldPause > shieldCooldown)
+			{
+				gotoxy(position, MAX_Y - 1);
+				printf("%c", 232);
+			}
 		}
 		else if (direction < 3)
 		{
@@ -508,6 +551,11 @@ void moveHero(int position, int move, int direction)
 			{
 				printf("<\\ ");
 				step++;
+			}
+			if (clock() - shieldPause > shieldCooldown)
+			{
+				gotoxy(position, MAX_Y - 1);
+				printf("%c", 232);
 			}
 		}
 	}
@@ -535,15 +583,15 @@ void thunder(int progress)
 
 	for (int i = 0; i < thunderVolume; i++)
 	{
-		r[i] = (rand() % LIGHTNING_RANGE);
-		thunderLaunchPoints[i] = r[i] + currentPosition - (LIGHTNING_RANGE / 2);
+		random[i] = (rand() % LIGHTNING_RANGE);
+		thunderLaunchPoints[i] = random[i] + currentPosition - (LIGHTNING_RANGE / 2);
 		if (thunderLaunchPoints[i] < 0)
 		{
-			thunderLaunchPoints[i] = MAX_X + thunderLaunchPoints[i];
+			thunderLaunchPoints[i] = abs(thunderLaunchPoints[i]);
 		}
-		else if (thunderLaunchPoints[i] > MAX_X)
+		if (thunderLaunchPoints[i] > MAX_X - 2)
 		{
-			thunderLaunchPoints[i] = thunderLaunchPoints[i] % MAX_X;
+			thunderLaunchPoints[i] = (MAX_X - 1) - thunderLaunchPoints[i] % (MAX_X - 2);
 		}
 	}
 	for (int i = 0; i < thunderVolume; i++)
@@ -555,18 +603,15 @@ void thunder(int progress)
 				if (rodPosition > travelPoints[i])
 				{
 					travelPoints[i] += 1;
-					gotoxy(travelPoints[i], progress);
-					printf("\\\n");
+					recordPath(i, 0);
 				}
 				else if (rodPosition < travelPoints[i])
 				{
 					travelPoints[i] -= 1;
-					gotoxy(travelPoints[i], progress);
-					printf("/\n");
+					recordPath(i, 1);
 				}
 				else {
-					gotoxy(travelPoints[i], progress);
-					printf("|\n");
+					recordPath(i, 2);
 				}
 			}
 		}
@@ -586,18 +631,15 @@ void thunder(int progress)
 				if (closestTreePos > travelPoints[i])
 				{
 					travelPoints[i] += 1;
-					gotoxy(travelPoints[i], progress);
-					printf("\\\n");
+					recordPath(i, 0);
 				}
 				else if (closestTreePos < travelPoints[i])
 				{
 					travelPoints[i] -= 1;
-					gotoxy(travelPoints[i], progress);
-					printf("/\n");
+					recordPath(i, 1);
 				}
 				else {
-					gotoxy(travelPoints[i], progress);
-					printf("|\n");
+					recordPath(i, 2);
 				}
 			}
 			else if (abs(currentPosition - travelPoints[i]) < 60 && !(lightningRunnerPerk && !shield)) 
@@ -606,45 +648,39 @@ void thunder(int progress)
 				if (currentPosition > travelPoints[i])
 				{
 					travelPoints[i] += 1;
-					gotoxy(travelPoints[i], progress);
-					printf("\\\n");
+					recordPath(i, 0);
 				}
 				else if (currentPosition < travelPoints[i])
 				{
 					travelPoints[i] -= 1;
-					gotoxy(travelPoints[i], progress);
-					printf("/\n");
+					recordPath(i, 1);
 				}
 				else {
-					gotoxy(travelPoints[i], progress);
-					printf("|\n");
+					recordPath(i, 2);
 				}
 			}
 			else 
 			{
-				if (r[i] < 34 && travelPoints[i] > 1)
-				{
-					travelPoints[i] -= 1;
-					gotoxy(travelPoints[i], progress);
-					printf("/\n");
-				}
-				else if (r[i] < 67 && travelPoints[i] < 237)
+				if (random[i] < 34 && travelPoints[i] < MAX_X - 2)
 				{
 					travelPoints[i] += 1;
-					gotoxy(travelPoints[i], progress);
-					printf("\\\n");
+					recordPath(i, 0);
+				}
+				else if (random[i] < 67 && travelPoints[i] > 0)
+				{
+					travelPoints[i] -= 1;
+					recordPath(i, 1);
 				}
 				else
 				{
-					gotoxy(travelPoints[i], progress);
-					printf("|\n");
+					recordPath(i, 2);
 				}
 			}
 		}
 
 		else
 		{
-			if (progress == MIN_Y)
+			if (progress == MIN_Y + 1)
 			{
 				if (i == 0)
 					travelPoints[i] = thunderLaunchPoints[i];
@@ -661,22 +697,19 @@ void thunder(int progress)
 					}
 				}
 			}
-			if (r[i] < 34 && travelPoints[i] > 1)
-			{
-				travelPoints[i] -= 1;
-				gotoxy(travelPoints[i], progress);
-				printf("/\n");
-			}
-			else if (r[i] < 67 && travelPoints[i] < MAX_X)
+			if (random[i] < 34 && travelPoints[i] < MAX_X - 2)
 			{
 				travelPoints[i] += 1;
-				gotoxy(travelPoints[i], progress);
-				printf("\\\n");
+				recordPath(i, 0);
+			}
+			else if (random[i] < 67 && travelPoints[i] > 0)
+			{
+				travelPoints[i] -= 1;
+				recordPath(i, 1);
 			}
 			else
 			{
-				gotoxy(travelPoints[i], progress);
-				printf("|\n");
+				recordPath(i, 2);
 				
 			}
 		}
@@ -685,6 +718,11 @@ void thunder(int progress)
 
 clearHero(int currentPosition)
 {
+	gotoxy(currentPosition + 2, MAX_Y - 1);
+	for (int i = 0; i < 4; i++)
+	{
+		printf("\b \b");
+	}
 	gotoxy(currentPosition + 6, MAX_Y - 2);
 	for (int i = 0; i < 12; i++)
 	{
@@ -716,9 +754,6 @@ int askNumber()
 	{
 		fgets(number, 10, stdin);
 		result = sscanf_s(number, "%d", &i);
-		printf("number = %d\n", number);
-		if (result < 1)
-			printf("not a number");
 	} while (result < 1);
 	FLUSH_STDIN(number);
 	return i;
@@ -729,9 +764,9 @@ int gameProgress()
 	if (thunderSpeed > 16)
 	{
 		thunderSpeed--;
-		thunderFrequency = thunderFrequency - 110;
+		thunderFrequency = thunderFrequency - 60;
 	}
-	else if (thunderVolume == 1)
+	else if (points > 20 && thunderVolume == 1)
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
@@ -770,7 +805,7 @@ int gameProgress()
 		gameBorders();
 		thunderPause = clock() + 2000;
 	}
-	else if (points > 50 && thunderVolume == 2)
+	else if (points > 30 && thunderVolume == 2)
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
@@ -795,6 +830,7 @@ int gameProgress()
 			else if (c == 2)
 			{
 				sprintSpeed -= 5;
+				sprintDuration += 2000;
 			}
 			else if (c == 3)
 			{
@@ -802,7 +838,7 @@ int gameProgress()
 			}
 			else if (c == 4)
 			{
-				harvesterPerk = 1;
+				harvesterPerk = 2;
 			}
 			else
 				i--;
@@ -812,7 +848,7 @@ int gameProgress()
 		gameBorders();
 		thunderPause = clock() + 2000;
 	}
-	else if (points > 100 && thunderVolume == 3)
+	else if (points > 44 && thunderVolume == 3)
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
@@ -852,7 +888,7 @@ int gameProgress()
 		gameBorders();
 		thunderPause = clock() + 2000;
 	}
-	else if (points > 150 && thunderVolume == 4 && thunderSpeed > 7)
+	else if (points > 59 && thunderVolume == 4 && thunderSpeed > 7)
 	{
 		thunderSpeed = 7;
 
@@ -870,6 +906,7 @@ int gameProgress()
 			if (c == 1)
 			{
 				sprintSpeed -= 5;
+				sprintDuration += 5000;
 			}
 			else if (c == 2)
 			{
@@ -885,7 +922,7 @@ int gameProgress()
 			else if (c == 4)
 			{
 				sprintDuration += 5000;
-				timeSlowPerk += 1
+				timeSlowPerk += 1;
 			}
 			else
 				i--;
@@ -895,7 +932,7 @@ int gameProgress()
 		gameBorders();
 		thunderPause = clock() + 2000;
 	}
-	else if (thunderSpeed > 5 && points > 200)
+	else if (thunderSpeed > 5 && points > 79)
 	{
 		gotoxy(80, 30);
 		printf("Choose wisely, things will only get worse from here");
@@ -927,12 +964,13 @@ int gameProgress()
 			}
 			else if (c == 3)
 			{
-				rodCooldown -= 7;
+				rodCooldown -= 7000;
 				channelerPerk = 1;
 			}
 			else if (c == 4)
 			{
 				gardenerPerk = 1;
+				treeCooldown -= 4000;
 			}
 			else
 				i--;
@@ -944,14 +982,22 @@ int gameProgress()
 		gameBorders();
 		thunderPause = clock() + 2000;
 	}
-	else if (thunderSpeed > 3 && points > 250)
+	else if (thunderVolume == 4 && points > 99)
 	{
 		thunderFrequency = thunderFrequency - 300;
 		thunderVolume = 5;
-		thunderSpeed = 3;
-		thunderPause = clock() + 2000;
 	}
-	else if (points > 299)
+	else if (points > 119 && thunderVolume == 5)
+	{
+		thunderVolume = 6;
+		thunderFrequency -= 300;
+	}
+	else if (points > 139 && thunderVolume == 5)
+	{
+		thunderVolume = 7;
+		thunderFrequency -= 200;
+	}
+	else if (points > 149 && gameMode)
 	{
 		system("CLS");
 		PlaySound("BGM.wav", NULL, SND_ASYNC);
@@ -971,10 +1017,17 @@ int gameProgress()
 		while ((c = getchar()) != '\n' && c != EOF);
 		initialize();
 	}
+	else if (points > 199 && points < 201)
+	{
+		thunderSpeed = 3;
+	}
 }
 
 initialize()
 {
+	gameMode = 1;
+
+
 	PlaySound("thunderClap.wav", NULL, SND_ASYNC);
 	system("CLS");
 	thunderPause = clock();
@@ -983,10 +1036,10 @@ initialize()
 	soundDelay = clock();
 	throwDelay = clock();
 	thunderLaunched = 0;
-	thunderProgress = MIN_Y;
+	thunderProgress = MIN_Y + 1;
 	currentPosition = 100;
-	thunderSpeed = 30;
-	thunderFrequency = 2600;
+	thunderSpeed = 25;
+	thunderFrequency = 1600;
 	thunderVolume = 1;
 	thunderGuard = 0;
 
@@ -997,22 +1050,22 @@ initialize()
 	choice1[3] = "";
 
 	choice2[0] = "Shield cooldown -2 second";
-	choice2[1] = "Upgrade sprint speed";
+	choice2[1] = "Upgrade sprint speed and duration +2 seconds";
 	choice2[2] = "Sprint duration +5 seconds";
-	choice2[3] = "Trees that have stood for 10 seconds grow a fruit that gives you +1 thunderGuard";
+	choice2[3] = "Trees now grow 2 fruit";
 
 	choice3[0] = "Trees become more resistant to lightning";
 	choice3[1] = "Time slows down when you sprint";
 	choice3[2] = "Seed cooldown -6 seconds";
 	choice3[3] = "Unlock the mighty lightning rod";
 
-	choice4[0] = "Upgrade sprint speed";
+	choice4[0] = "Upgrade sprint speed and duration +5 seconds";
 	choice4[1] = "Trees become more resistant to lightning";
 	choice4[2] = "Lightning rod cooldown - 8 seconds OR unlock it if you haven't yet.";
-	choice4[3] = "Sprint duration + 5 seconds and enchance timeslow while sprinting";
+	choice4[3] = "Sprint duration +5 seconds and enchance timeslow while sprinting";
 
-	choice5[0] = "Throw your shield horizontally by pressing the left or right arrow key, snatch a thunderGuard from each ray of lightning it passes - MASTER OF AEGIS";
-	choice5[1] = "Permanently sprint and lightning can't home into you except when you shield, guarding now grants + 3 thunderGuard- LIGHTNING RUNNER";
+	choice5[0] = "Throw your shield horizontally by pressing the left or right arrow key during shielding, snatch a thunderGuard from each nearby ray of lightning it passes - MASTER OF AEGIS";
+	choice5[1] = "Permanently sprint and lightning can't home into you except when you shield - LIGHTNING RUNNER";
 	choice5[2] = "Lightning rod cooldown - 7 seconds and refresh all other cooldowns when you plant the rod - CHANNELER";
 	choice5[3] = "Trees bloom instantly into their final form and slow down approaching lightning - GARDENER";
 
@@ -1020,7 +1073,7 @@ initialize()
 	lightningRunnerPerk = 0;
 	channelerPerk = 0;
 	gardenerPerk = 0;
-	harvesterPerk = 0;
+	harvesterPerk = 1;
 	timeSlowPerk = 0;
 
 	endText[0] = "||        |||||||||    ||||||||   |||||||||  |||     ||  ||||          |       |||||||||| ||      ||";
@@ -1066,7 +1119,7 @@ initialize()
 	shieldThrow = 0;
 	treeCooldown = 20000;
 	treeMaxHealth = 2;
-	treeDurationUpgrade = 0;
+
 	sprintDuration = 5000;
 	sprintCooldown = 20000;
 	lightningRodUnlocked = 0;
@@ -1091,7 +1144,208 @@ initialize()
 	moveHero(currentPosition, move, direction);
 }
 
-intro()
+initialize2()
+{
+	gameMode = 0;
+	PlaySound("thunderClap.wav", NULL, SND_ASYNC);
+	system("CLS");
+	thunderPause = clock();
+	thunderDelay = clock();
+	shieldDelay = clock();
+	soundDelay = clock();
+	throwDelay = clock();
+	thunderLaunched = 0;
+	thunderProgress = MIN_Y + 1;
+	currentPosition = 100;
+	thunderSpeed = 5;
+	lightningRunnerPerk = 1;
+	thunderFrequency = 600;
+	thunderGuard = 10;
+	thunderVolume = 5;
+
+
+	choice1[0] = "Shield cooldown -1 seconds";
+	choice1[1] = "Seed cooldown -10 seconds";
+	choice1[2] = "Sprint duration +4 seconds";
+	choice1[3] = "";
+
+	choice2[0] = "Shield cooldown -2 second";
+	choice2[1] = "Upgrade sprint speed and duration +2 seconds";
+	choice2[2] = "Sprint duration +5 seconds";
+	choice2[3] = "Trees now grow 2 fruit";
+
+	choice3[0] = "Trees become more resistant to lightning";
+	choice3[1] = "Time slows down when you sprint";
+	choice3[2] = "Seed cooldown -6 seconds";
+	choice3[3] = "Unlock the mighty lightning rod";
+
+	choice4[0] = "Upgrade sprint speed and duration +5 seconds";
+	choice4[1] = "Trees become more resistant to lightning";
+	choice4[2] = "Lightning rod cooldown - 8 seconds OR unlock it if you haven't yet.";
+	choice4[3] = "Sprint duration +5 seconds and enchance timeslow while sprinting";
+
+	choice5[0] = "Throw your shield horizontally by pressing the left or right arrow key during shielding, snatch a thunderGuard from each nearby ray of lightning it passes - MASTER OF AEGIS";
+	choice5[1] = "Permanently sprint and lightning can't home into you except when you shield - LIGHTNING RUNNER";
+	choice5[2] = "Lightning rod cooldown - 7 seconds and refresh all other cooldowns when you plant the rod - CHANNELER";
+	choice5[3] = "Trees bloom instantly into their final form and slow down approaching lightning - GARDENER";
+
+	aegisPerk = 0;
+	lightningRunnerPerk = 1;
+	channelerPerk = 0;
+	gardenerPerk = 0;
+	harvesterPerk = 1;
+	timeSlowPerk = 0;
+
+	endText[0] = "||        |||||||||    ||||||||   |||||||||  |||     ||  ||||          |       |||||||||| ||      ||";
+	endText[1] = "||        ||          ||          ||         ||||    ||  ||  ||       | |      ||      ||  ||    || ";
+	endText[2] = "||        ||         ||           ||         || ||   ||  ||    ||    || ||     ||   |||     ||  ||  ";
+	endText[3] = "||        |||||||||  ||  |||||||  |||||||||  ||  ||  ||  ||     ||  ||   ||    ||||||         ||    ";
+	endText[4] = "||        ||         ||        || ||         ||   || ||  ||    ||  |||||||||   ||   ||        ||    ";
+	endText[5] = "||        ||         ||       ||  ||         ||    ||||  ||   ||  ||       ||  ||    ||       ||    ";
+	endText[6] = "||||||||| |||||||||  ||||||||||   |||||||||  ||     |||  |||||   ||         || ||     ||      ||    ";
+
+	titleText[0] = "||          ||  |||||||         ||        ||     ||||||||  ||      || ||||||||||| |||     ||  ||  |||     ||     |||||||| ";
+	titleText[1] = " ||        ||  ||               ||        ||   ||          ||      ||     ||      ||||    ||  ||  ||||    ||   ||         ";
+	titleText[2] = "  ||      ||   ||               ||        ||  ||           ||      ||     ||      || ||   ||  ||  || ||   ||  ||          ";
+	titleText[3] = "   ||    ||     |||||||         ||        ||  ||  |||||||  ||||||||||     ||      ||  ||  ||  ||  ||  ||  ||  ||  ||||||| ";
+	titleText[4] = "    ||  ||            ||        ||        ||  ||        || ||      ||     ||      ||   || ||  ||  ||   || ||  ||        ||";
+	titleText[5] = "     ||||             ||        ||        ||  ||       ||  ||      ||     ||      ||    ||||  ||  ||    ||||  ||       || ";
+	titleText[6] = "      ||        ||||||| ()      ||||||||| ||   |||||||||   ||      ||     ||      ||     |||  ||  ||     |||   |||||||||  ";
+
+	controls[0] = "CONTROLS:";
+	controls[1] = "You can move left and right with arrow keys.";
+	controls[2] = "The down arrow key plants a magical seed that grows into a tree.";
+	controls[3] = "The up arrow key raises the lightning guard, that absorbs lightning strikes and grants you one thunder-guard, that can protect you from future strikes.";
+	controls[4] = "The s key initiates a sprint that will last a certain duration.";
+	controls[5] = "The r key plants the mighty lightning rod if you have it in your backpack.";
+
+	sprint = 1;
+	sprintDelay = clock();
+	sprintSpeed = 5;
+	runDelay = 5;
+	start = 0;
+	delay = clock();
+	points = 0;
+
+	statsDelay = 100;
+	key = 0;
+	shield = 0;
+	tree = 0;
+	treeDecay = 1;
+	lightningRod = 0;
+	rodDuration = 15000;
+	shieldDuration = 300;
+	shieldCooldown = 8000;
+	shieldThrow = 0;
+	treeCooldown = 20000;
+	treeMaxHealth = 2;
+	sprintDuration = 5000;
+	sprintCooldown = 20000;
+	lightningRodUnlocked = 0;
+	rodCooldown = 30000;
+
+	for (int i = 0; i < 5; i++)
+	{
+		treePosition[i] = -1;
+		treePhase[i] = -2;
+		treeHealth[i] = 2;
+		treeDamageDelay[i] = clock();
+		treeFruit[i] = 0;
+	}
+
+	rodPosition = -1;
+	move = 0;
+	death = 0;
+	step = 1;
+	agg = 0;
+	direction = 2; // 0 = left 1 = right
+	gameBorders();
+	moveHero(currentPosition, move, direction);
+}
+
+void chosenModeBorders(int mode)
+{
+	int xMin = 45;
+	int xMax = 185;
+	int borderLength = 140;
+	if (mode == 1)
+	{
+		gotoxy(xMax, 48);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("\b \b");
+		}
+		gotoxy(xMax, 52);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("\b \b");
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			gotoxy(46, 49 + i);
+			printf("\b \b");
+			gotoxy(xMax, 49 + i);
+			printf("\b \b");
+		}
+
+		gotoxy(xMin, 43);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("%s", WALL);
+		}
+		gotoxy(xMin, 47);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("%s", WALL);
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			gotoxy(xMin, 44 + i);
+			printf("%s", WALL);
+			gotoxy(xMax - 1, 44 + i);
+			printf("%s", WALL);
+		}
+	}
+	else
+	{
+		gotoxy(xMax, 43);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("\b \b");
+		}
+		gotoxy(xMax, 47);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("\b \b");
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			gotoxy(xMin + 1, 44 + i);
+			printf("\b \b");
+			gotoxy(xMax, 44 + i);
+			printf("\b \b");
+		}
+
+		gotoxy(xMin, 48);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("%s", WALL);
+		}
+		gotoxy(xMin, 52);
+		for (int i = 0; i < borderLength; i++)
+		{
+			printf("%s", WALL);
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			gotoxy(xMin, 49 + i);
+			printf("%s", WALL);
+			gotoxy(xMax - 1, 49 + i);
+			printf("%s", WALL);
+		}
+	}
+}
+int intro()
 {
 	Sleep(4000);
 	PlaySound("BG.wav", NULL, SND_ASYNC);
@@ -1106,43 +1360,218 @@ intro()
 		gotoxy(50, 35 + i);
 		printf("%s", controls[i]);
 	}
+
 	gotoxy(50, 45);
-	printf("PRESS ENTER TO START THE GAME!");
 	hidecursor();
-	while ((c = getchar()) != '\n' && c != EOF);
+	printf("NORMAL MODE - Lightning gets progressively more dangerous and you can upgrade your abilities, survive long enough to be victorious");
+	gotoxy(50, 50);
+	printf("NEVERENDING MODE - Dodge six rays of lightning with blinding speed for as long as you can, it gets harder, but never ends");
+	gameMode = 1;
+	chosenModeBorders(1);
+	while (_getch() != '\r')
+	{
+		int c = 0;
+		int ch = 0;
+		int q = 0;
+		while (_kbhit())
+		{
+			c = _getch();
+		}
+		switch (c)
+		{
+		case 72:
+			if (!gameMode)
+			{
+				gameMode = 1;
+				chosenModeBorders(1);
+				Sleep(50);
+			}
+			break;
+		case 80:
+			if (gameMode)
+			{
+				gameMode = 0;
+				chosenModeBorders(0);
+				Sleep(50);
+			}
+			break;
+		}
+		if (c == 10)
+		{
+			break;
+		}
+	}
+
 }
 
 main()
 {
 
+
 	srand(time(NULL));   // should only be called once
 	initialize();
 	intro();
-	initialize();
+	if (gameMode)
+		initialize();
+	else
+		initialize2();
 
 	while (1)
 	{
-		while (_kbhit())
+		if (botMode)
 		{
-			key = _getch();
-			if (agg % 2 == 0)
+			int closestThunder = 1000;
+			int closestThunderPos = MAX_X / 2;
+			int a;
+
+			for (int i = 0; i < thunderVolume; i++)
 			{
-				keyArray[0] = key;
-			}
-			else
-			{
-				keyArray[1] = key;
+				for (int j = i + 1; j < thunderVolume; j++)
+				{
+					if (travelPoints[j] < travelPoints[i])
+					{
+						a = travelPoints[i];
+						travelPoints[i] = travelPoints[j];
+						travelPoints[j] = a;
+					}
+				}
 			}
 
-			if (agg == 0)
-				agg = 1;
-			else
-				agg = 0;
+			int limits[8];
+			limits[0] = 0;
+			for (int i = 1; i <= thunderVolume; i++)
+			{
+				limits[i] = travelPoints[i - 1];
+			}
+			limits[thunderVolume + 1] = 237;
+
+			int position;
+			int gaps[7];
+			for (int i = 0; i < thunderVolume + 1; i++)
+			{
+				gaps[i] = limits[i + 1] - limits[i];
+				if (limits[i + 1] > currentPosition && currentPosition > limits[i])
+					position = i;
+			}
+
+			int gapBigEnough[7];
+			for (int i = 0; i < thunderVolume + 1; i++)
+			{
+				if (gaps[i] > 22 && thunderProgress < 25)
+					gapBigEnough[i] = 1;
+				else if (gaps[i] > 18 && thunderProgress < 40)
+					gapBigEnough[i] = 1;
+				else if (gaps[i] > 14)
+					gapBigEnough[i] = 1;
+				else
+					gapBigEnough[i] = 0;
+			}
+			int closestBigEnoughGap = position;
+			int distanceToClosestGap = 1000;
+
+			for (int i = 0; i < position; i++)
+			{
+				if (currentPosition - limits[i + 1] < distanceToClosestGap)
+				{
+					if (gapBigEnough[i])
+					{
+						distanceToClosestGap = currentPosition - limits[i + 1];
+						closestBigEnoughGap = i;
+					}
+				}
+			}
+			for (int i = thunderVolume; i > position; i--)
+			{
+				if (currentPosition - limits[i] < distanceToClosestGap)
+				{
+					if (gapBigEnough[i])
+					{
+						distanceToClosestGap = currentPosition - limits[i];
+						closestBigEnoughGap = i;
+					}
+				}
+			}
+
+
+			for (int i = 0; i < thunderVolume; i++)
+			{
+				if (abs(currentPosition - travelPoints[i]) < closestThunder)
+				{
+					closestThunder = abs(currentPosition - travelPoints[i]);
+					closestThunderPos = travelPoints[i];
+				}
+
+			}
+
+			if (closestThunder < 5 && thunderProgress > 54 && clock() - shieldPause > shieldCooldown)
+			{
+				key = 72;
+			}
+			else if (clock() - shieldPause > shieldCooldown || clock() - shieldPause < 300)
+			{
+				if (currentPosition > closestThunderPos)
+					key = 75;
+				else
+					key = 77;
+			}
+			else if (!thunderLaunched)
+			{
+				if (MAX_X / 2 > currentPosition)
+				{
+					key = 77;
+				}
+				else
+				{
+					key = 75;
+				}
+			}
+			else if (clock() - sprintDownTime > sprintCooldown && !lightningRunnerPerk)
+			{
+				key = 's';
+			}
+			else if (clock() - treeDownTime > treeCooldown)
+			{
+				key = 80;
+			}
+			else if (gaps[position] > 14)
+			{
+				if (currentPosition > (limits[position + 1] + limits[position]) / 2)
+					key = 75;
+				else
+					key = 77;
+			}
+			else if (distanceToClosestGap < 1000)
+			{
+				if (closestBigEnoughGap < position)
+					key = 75;
+				else
+					key = 77;
+			}
+		}
+		else
+		{
+			while (_kbhit())
+			{
+				key = _getch();
+				if (agg % 2 == 0)
+				{
+					keyArray[0] = key;
+				}
+				else
+				{
+					keyArray[1] = key;
+				}
+
+				if (agg == 0)
+					agg = 1;
+				else
+					agg = 0;
+			}
 		}
 
 		switch (key)
 		{
-			case 77:
+			case 77://right arrow key
 				move = 1;
 				key = 0;
 				direction = 1;
@@ -1154,7 +1583,7 @@ main()
 				}
 				break;
 
-			case 75:
+			case 75://left arrow key
 				move = 1;
 				direction = 0;
 				key = 0;
@@ -1166,7 +1595,7 @@ main()
 				}
 				break;
 
-			case 72:
+			case 72://up arrow key
 				if (clock() - shieldPause > shieldCooldown)
 				{
 					move = 0;
@@ -1180,7 +1609,7 @@ main()
 				}
 				break;
 
-			case 80:
+			case 80://down arrow key
 
 				if (clock() - treeDownTime > treeCooldown)
 				{
@@ -1210,8 +1639,13 @@ main()
 		{
 			switch (keyArray[i])
 			{
-			case 115:
-				if (clock() - sprintDownTime > sprintCooldown)
+			case 's':
+				if (lightningRunnerPerk)
+				{
+					move = 0;
+					direction = 2;
+				}
+				if (clock() - sprintDownTime > sprintCooldown && !lightningRunnerPerk)
 				{
 					if (sprintSpeed == 5)
 					{
@@ -1224,7 +1658,7 @@ main()
 				}
 				break;
 
-			case 114:
+			case 'r':
 				if (lightningRodUnlocked && clock() - rodDowntime > rodCooldown)
 				{
 					lightningRod = 1;
@@ -1232,7 +1666,12 @@ main()
 					rodPosition = currentPosition;
 					buildRod();
 					if (channelerPerk)
+					{
 						thunderGuard++;
+						treeDownTime = 20000;
+						shieldPause = 20000;
+						sprintDownTime = 20000;
+					}
 				}
 				break;
 			}
@@ -1267,12 +1706,13 @@ main()
 			{
 				if (abs(treePosition[i] - currentPosition) < 3)
 				{
-					thunderGuard++;
+					thunderGuard += harvesterPerk;
 					treeFruit[i] = 0;
 					treeTimer[i] = clock() - 6500;
 				}
 			}
 		}
+
 		if (move && clock() - start > 250)
 		{
 			move = 0;
@@ -1290,7 +1730,7 @@ main()
 			}
 			else if (direction == 1)
 			{
-				if (currentPosition < MAX_X - 2)
+				if (currentPosition < MAX_X - 3)
 					currentPosition++;
 				delay = clock();
 			}
@@ -1323,8 +1763,11 @@ main()
 			gotoxy(40, MAX_Y + 1);
 			printf("ThunderGuards: %d", thunderGuard);
 
-			gotoxy(125, MAX_Y + 1);
-			printf(clock() - sprintDownTime > sprintCooldown ? "SPRINT CD: 0" : "SPRINT CD: %d", ((sprintCooldown / 1000) - ((clock() - sprintDownTime) / 1000)));
+			if (!lightningRunnerPerk)
+			{
+				gotoxy(125, MAX_Y + 1);
+				printf(clock() - sprintDownTime > sprintCooldown ? "SPRINT CD: 0" : "SPRINT CD: %d", ((sprintCooldown / 1000) - ((clock() - sprintDownTime) / 1000)));
+			}
 
 			gotoxy(125, MAX_Y + 2);
 			printf(clock() - treeDownTime > treeCooldown ? "SEED CD: 0" : "SEED CD: %d", ((treeCooldown / 1000) - ((clock() - treeDownTime) / 1000)));
@@ -1389,7 +1832,7 @@ main()
 		{
 			if (timeSlowPerk > 0 && sprint)
 			{
-				if (thunderProgress < MAX_Y && clock() - thunderDelay > thunderSpeed + timeSlowPerk * 5)
+				if (thunderProgress < MAX_Y && clock() - thunderDelay > thunderSpeed + timeSlowPerk * 3)
 				{
 					thunderDelay = clock();
 					thunder(thunderProgress);
@@ -1426,6 +1869,7 @@ main()
 								{
 									PlaySound("explosion.wav", NULL, SND_ASYNC);
 									treePhase[t] = 14;
+									clearTree(treePosition[t]);
 									moveHero(currentPosition, move, direction);
 								}
 								else
@@ -1442,29 +1886,23 @@ main()
 						if (shield)
 						{
 							PlaySound("absorb.wav", NULL, SND_ASYNC);
-							system("CLS");
-							moveHero(currentPosition, move, direction);
-							gameBorders();
+							clearThunder();
 							thunderLaunched = 0;
-							thunderProgress = MIN_Y;
+							thunderProgress = MIN_Y + 1;
 							thunderPause = clock();
 							thunderGuard++;
-							if (lightningRunnerPerk)
-								thunderGuard += 2;
 							points++;
 							i = 10;
 							gameProgress();
 						}
 						else if (thunderGuard > 0)
 						{
+							clearThunder();
 							PlaySound("strike3.wav", NULL, SND_ASYNC);
 							thunderGuard--;
 							thunderLaunched = 0;
-							thunderProgress = MIN_Y;
+							thunderProgress = MIN_Y + 1;
 							thunderPause = clock();
-							system("CLS");
-							moveHero(currentPosition, move, direction);
-							gameBorders();
 							i = 10;
 						}
 						else
@@ -1491,17 +1929,18 @@ main()
 							gotoxy(40, 26);
 							printf("PRESS ENTER TO TRY AGAIN!");
 							while ((c = getchar()) != '\n' && c != EOF);
-							initialize();
+							if (gameMode)
+								initialize();
+							else
+								initialize2();
 						}
 					}
 				}
 				if (thunderProgress >= MAX_Y)
 				{
-					system("CLS");
-					moveHero(currentPosition, move, direction);
-					gameBorders();
+					clearThunder();
 					thunderLaunched = 0;
-					thunderProgress = MIN_Y;
+					thunderProgress = MIN_Y + 1;
 					thunderPause = clock();
 					points++;
 					gameProgress();
@@ -1512,3 +1951,4 @@ main()
 	}
 	return 1;
 }
+
