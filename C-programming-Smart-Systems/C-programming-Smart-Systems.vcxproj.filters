@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
